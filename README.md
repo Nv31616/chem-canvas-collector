@@ -12,7 +12,7 @@
     
 
 ## Workflow Diagram
-![[Pasted image 20261010215534.png]]
+![[worflow.png]]
 
 ### The Tech Stack
 
