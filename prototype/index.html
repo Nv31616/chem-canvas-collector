@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chem Data Collector</title>
+    <style>
+        body { margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; font-family: sans-serif; background: #f0f0f0; overflow: hidden; }
+        #toolbar { padding: 10px; background: #fff; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ccc; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 10; }
+        #reference-img { height: 80px; max-width: 50vw; object-fit: contain; background: #fafafa; border: 1px solid #ddd; border-radius: 4px; }
+        .controls { display: flex; gap: 10px; align-items: center; }
+        canvas { flex-grow: 1; background: #fff; touch-action: none; cursor: crosshair; }
+        button { padding: 12px 20px; font-size: 16px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
+        .btn-clear { background: #e0e0e0; color: #333; }
+        .btn-save { background: #007bff; color: white; }
+    </style>
+</head>
+<body>
+    <div id="toolbar">
+        <img id="reference-img" src="" alt="Loading reference..." />
+        <div class="controls">
+            <span id="counter" style="font-weight:bold;">0/0</span>
+            <button class="btn-clear" onclick="clearCanvas()">Clear</button>
+            <button class="btn-skip" onclick="skipAndNext()" style="background: #ffc107; color: #000;">Skip</button>
+            <button class="btn-save" onclick="saveAndNext()">Save & Next</button>
+        </div>
+    </div>
+    <canvas id="draw-pad"></canvas>
+
+    <script>
+        const canvas = document.getElementById('draw-pad');
+        const ctx = canvas.getContext('2d');
+        let queue = [];
+        let currentIndex = 0;
+        let totalCount = 0;
+        let completedCount = 0;
+        let isDrawing = false;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight - document.getElementById('toolbar').offsetHeight;
+            clearCanvas();
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        fetch('/api/queue')
+            .then(r => r.json())
+            .then(data => {
+                queue = data.queue;
+                totalCount = data.total_count;
+                completedCount = data.completed_count;
+                resizeCanvas();
+                loadCurrent();
+            });
+
+        function loadCurrent() {
+            if (currentIndex >= queue.length) {
+                document.getElementById('counter').innerText = `${totalCount} / ${totalCount}`;
+                document.getElementById('reference-img').style.display = 'none';
+                alert("All images completed! Check your folder.");
+                return;
+            }
+            let currentGlobalIndex = completedCount + currentIndex + 1;
+            document.getElementById('counter').innerText = `${currentGlobalIndex} / ${totalCount}`;
+            document.getElementById('reference-img').src = `/api/reference/${queue[currentIndex]}`;
+            clearCanvas();
+        }
+
+        function clearCanvas() {
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        async function skipAndNext() {
+            await fetch('/api/skip', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: queue[currentIndex]
+                })
+            });
+            currentIndex++;
+            loadCurrent();
+        }
+
+        async function saveAndNext() {
+            const dataURL = canvas.toDataURL("image/png");
+            await fetch('/api/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: queue[currentIndex],
+                    image: dataURL
+                })
+            });
+            currentIndex++;
+            loadCurrent();
+        }
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+
+        function startPosition(e) { 
+            isDrawing = true; 
+            draw(e); 
+        }
+        
+        function endPosition() { 
+            isDrawing = false; 
+            ctx.beginPath(); 
+        }
+        
+        function draw(e) {
+            if (!isDrawing) return;
+            e.preventDefault(); 
+            const pos = getPos(e);
+            ctx.lineWidth = 3;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.strokeStyle = "#000";
+            
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+        }
+
+        canvas.addEventListener('touchstart', startPosition, {passive: false});
+        canvas.addEventListener('touchend', endPosition);
+        canvas.addEventListener('touchmove', draw, {passive: false});
+        
+        canvas.addEventListener('mousedown', startPosition);
+        canvas.addEventListener('mouseup', endPosition);
+        canvas.addEventListener('mousemove', draw);
+    </script>
+</body>
+</html>
