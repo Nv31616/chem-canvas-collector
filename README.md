@@ -12,7 +12,7 @@
     
 
 ## Workflow Diagram
-![[worflow.png]]
+![[workflow.png]]
 
 ### The Tech Stack
 
