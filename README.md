@@ -32,6 +32,7 @@
 | **2. Database & Data Pipeline** | Set up MongoDB Atlas. Write the `ImageQueue.js` Mongoose schema. Develop the `seed.js` script to filter the dataset and upload the reference images.                                                    | Teammate 2's MongoDB Atlas Free Tier |
 | **3. Backend API Server**       | Build the Express `server.js`. Implement the concurrency locking logic (`findOneAndUpdate`). Connect the S3 utility and Mongoose models to the `/queue`, `/save`, and `/skip` routes. Deploy to Render. | Teammate 3's Render Account          |
 | **4. Frontend & Canvas UI**     | Initialize the React app. Integrate `@excalidraw/excalidraw`. Build the UI controls and wire up the `fetch` calls to the backend API. Deploy to Vercel.                                                 | Teammate 4's Vercel Account          |
+
 Here are the updated prompts for each teammate. They now explicitly instruct Claude to read your attached Python/HTML prototype files and translate that exact logic into the MERN architecture.
   
 
