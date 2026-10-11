@@ -26,34 +26,42 @@ mongoose
  */
 app.get('/api/queue', async (req, res) => {
   try {
-    const now = new Date();
-    const lockDurationMs = 5 * 60 * 1000; // 5 minutes
-    const lockTime = new Date(now.getTime() + lockDurationMs);
+    const { type } = req.query; // Extracts '?type=linear' from the URL
 
-    // Atomically find one 'pending' item that is unlocked or has an expired lock
+    const now = new Date();
+    const lockTime = new Date(now.getTime() + 5 * 60000); // 5 minutes
+
+    // Build the query object
+    const dbQuery = {
+      status: 'pending',
+      $or: [{ locked_until: null }, { locked_until: {$lt: now } }],
+    };
+
+    // If the frontend passed a type, add it to the database query
+    if (type && ['linear', 'cyclic'].includes(type)) {
+      dbQuery.structure_type = type;
+    }
+
     const imageItem = await ImageQueue.findOneAndUpdate(
-      {
-        status: 'pending',
-        $or: [{ locked_until: null }, { locked_until: {$lt: now } }],
-      },
+      dbQuery,
       { $set: { locked_until: lockTime } },
       { new: true, sort: { created_at: 1 } }
     );
 
     if (!imageItem) {
       return res.status(404).json({
-        message: 'No pending images available in the queue.',
+        message: `No pending images available in the queue for type: ${type || 'any'}.`,
       });
     }
 
-    // Convert filename (e.g. 'train_00336.json') to the corresponding reference image name[cite: 4, 6]
     const baseName = imageItem.filename.replace(/\.json$/i, '');
     const jpgFilename = `${baseName}.jpg`;
-    const imageUrl = `${"https://22245b230f1b8c935f4ed32b2757ecdc.r2.cloudflarestorage.com"}/${jpgFilename}`;
+    const imageUrl = `${process.env.R2_ENDPOINT}/${jpgFilename}`;
 
     return res.json({
       filename: imageItem.filename,
       imageUrl: imageUrl,
+      structure_type: imageItem.structure_type
     });
   } catch (error) {
     console.error('Error in GET /api/queue:', error);

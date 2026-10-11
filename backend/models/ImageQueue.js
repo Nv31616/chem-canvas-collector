@@ -15,6 +15,11 @@ const imageQueueSchema = new mongoose.mongoose.Schema({
     type: Date,
     default: null,
   },
+  structure_type: {
+    type: String,
+    enum: ['linear', 'cyclic', 'unknown'],
+    default: 'unknown',
+  },
   created_at: {
     type: Date,
     default: Date.now,
