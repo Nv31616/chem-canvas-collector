@@ -1,7 +1,7 @@
 import { S3Client, PutObjectCommand, CopyObjectCommand } from "@aws-sdk/client-s3";
 import dotenv from "dotenv";
 
-dotenv.config();
+dotenv.config({ path: '../.env' });
 
 // Initialize the S3 Client for Cloudflare R2
 const s3Client = new S3Client({

@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 import ImageQueue from './models/ImageQueue.js';
 import { uploadFile, copyFile } from './utils/s3Client.js';
 
-dotenv.config();
+dotenv.config({ path: '../.env' });
 
 const app = express();
 
@@ -49,7 +49,7 @@ app.get('/api/queue', async (req, res) => {
     // Convert filename (e.g. 'train_00336.json') to the corresponding reference image name[cite: 4, 6]
     const baseName = imageItem.filename.replace(/\.json$/i, '');
     const jpgFilename = `${baseName}.jpg`;
-    const imageUrl = `${process.env.PUBLIC_R2_DEV_URL}/${jpgFilename}`;
+    const imageUrl = `${"https://22245b230f1b8c935f4ed32b2757ecdc.r2.cloudflarestorage.com"}/${jpgFilename}`;
 
     return res.json({
       filename: imageItem.filename,

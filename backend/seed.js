@@ -3,7 +3,7 @@ import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import dotenv from 'dotenv';
 import ImageQueue from './models/ImageQueue.js';
 
-dotenv.config();
+dotenv.config({ path: '../.env' });
 
 const BUCKET_NAME = 'reference-images';
 
